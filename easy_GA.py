@@ -55,10 +55,12 @@ class GeneticAlgorithm(object):
                         raise TypeError(f"Parameter {param} must be {type(self.defaults[param])}, not {type(self.settings[param])}!")
             else:
                 self.settings[param] = self.defaults[param]
+    
     def __get_stats(self, gen):
         keys = list(self.population[gen].keys())
         self.best_fitness[gen] = max(self.population[gen].values())
         self.average_fitness[gen] = self.__get_generation_avg(gen)
+    
     def __create_pop(self): #initialize population
         self.population = {} #reset in case of a rerun
         if self.chromosome_repr == 'int':
@@ -69,8 +71,6 @@ class GeneticAlgorithm(object):
             self.population[0] = self.__create_pop_string()
         elif self.chromosome_repr == 'bool':
             self.population[0] = self.__create_pop_bool()
-        
-        
         self.__sort_gen(0)
         self.__get_stats(0)
         
@@ -107,6 +107,7 @@ class GeneticAlgorithm(object):
                 if random.random()<=self.__get_fitness(chromosome):
                     selected[chromosome] = self.__get_fitness(chromosome)
         return selected
+    
     def __toggle_selection_mode(self, gen): #switch modes based on triggers
         if self.settings['elitism_trigger']:
             if self.__get_generation_avg(gen)>=self.settings['elitism_trigger']:
@@ -120,6 +121,7 @@ class GeneticAlgorithm(object):
             if self.__get_generation_avg(gen)>=self.settings['proportional_trigger']:
                 self.settings['selection'] = 'proportional'
                 self.settings['proportional_trigger'] = False
+    
     def __create_pop_integer(self):
         population = {}
         while len(population)<self.settings['pop_size']:
@@ -130,6 +132,7 @@ class GeneticAlgorithm(object):
             chromosome = self.chromosome(args, self.arg_names, self.chromosome_repr, limits = self.args[1])
             population[chromosome] = self.__get_fitness(chromosome)
         return population
+    
     def __create_pop_float(self):
         population = {}
         while len(population)<self.settings['pop_size']:
@@ -140,6 +143,7 @@ class GeneticAlgorithm(object):
             chromosome = self.chromosome(args, self.arg_names, self.chromosome_repr, limits = self.args[1])
             population[chromosome] = self.__get_fitness(chromosome)
         return population
+    
     def __create_pop_string(self):
         population = {}
         while len(population)<self.settings['pop_size']:
@@ -150,6 +154,7 @@ class GeneticAlgorithm(object):
             chromosome = self.chromosome(args, self.arg_names, self.chromosome_repr, self.settings['char_list'])
             population[chromosome] = self.__get_fitness(chromosome)
         return population
+    
     def __create_pop_bool(self):
         population = {}
         while len(population)<self.settings['pop_size']:
@@ -160,6 +165,7 @@ class GeneticAlgorithm(object):
             chromosome = self.chromosome(args, self.arg_names, self.chromosome_repr)
             population[chromosome] = self.__get_fitness(chromosome)
         return population    
+    
     def __get_fitness(self, chromosome):
         if chromosome.get_args() in self.calculated:
             fitness_score = chromosome.set_fitness(self.calculated[chromosome.get_args()]) #taking return from set_fitness
@@ -183,8 +189,10 @@ class GeneticAlgorithm(object):
         self.__get_stats(gen)
         self.__sort_gen(gen)
         self.__toggle_selection_mode(gen)
+    
     def __mutate(self, chromosome): #mutate a chromosome
         pass
+    
     def __crossover_gen(self, population):
         new_gen_candidates = {}
         dupes = []
@@ -219,6 +227,7 @@ class GeneticAlgorithm(object):
         child1.mutate(self.settings['mutation_rate'], self.settings['mutation_repeats'], self.settings['mutation_intensity'])
         child2.mutate(self.settings['mutation_rate'], self.settings['mutation_repeats'], self.settings['mutation_intensity'])
         return [child1,child2]
+    
     def __sort_gen(self, gen):
         sorted_gen = sorted(self.population[gen], key=self.fitness_function)
         sorted_gen.reverse()
@@ -230,6 +239,7 @@ class GeneticAlgorithm(object):
         
     def __remove_dupes(self, gen):
         pass
+    
     def __stop_conditions(self, gen):
         if gen>self.settings['number_of_safe_gens']:
             if abs(self.__get_generation_avg(gen-1)-self.__get_generation_avg(gen))<self.settings['relative_tolerance']: #difference between two gens
@@ -241,6 +251,7 @@ class GeneticAlgorithm(object):
                 if self.best_fitness[gen]>=self.settings['best_member_fitness_stop_condition']:
                     return True
         return False
+    
     def __get_generation_avg(self, gen):
         sum = 0.0
         for chromosome in self.population[gen]:
@@ -249,6 +260,7 @@ class GeneticAlgorithm(object):
             return sum/len(self.population[gen])
         except ZeroDivisionError:
             return 0
+    
     def __display_gen(self, gen):
         print(f"Gen {gen}: Average fitness -> {self.__get_generation_avg(gen)}")
         for chromosome in self.population[gen]:
@@ -289,11 +301,13 @@ class Chromosome(object):
         self.fitness_score = False
         self.representation = representation
         self.limits = limits
+    
     def get_fitness(self):
         if not self.fitness_score:
             raise Exception("Fitness score not calculated!")
         else:
             return self.fitness_score
+    
     def __limit(self, n, index):
         if self.representation=='int':
             return min(max(n, self.limits[index][0]), self.limits[index][1])
@@ -314,12 +328,16 @@ class Chromosome(object):
                     self.params[key] = random.choice(self.limits)
                 elif self.representation == 'bool':
                     self.params[key] = 1- self.params[key]
+    
     def set_fitness(self, value):
         self.fitness_score = value
         return self.fitness_score
+    
     def get_args(self):
         return f"{self.params}"
+    
     def get_values(self):
         return list(self.params.values())
+    
     def __str__(self):
         return str(list(self.params.values()))
