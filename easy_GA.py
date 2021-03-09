@@ -146,7 +146,7 @@ class GeneticAlgorithm(object):
     
     def __create_populatition_string(self):
         population = {}
-        while len(population)<self.settings['pop_size']:
+        while len(population)<self.settings['population_size']:
             args = []  
             for arg_index in range(self.args[1]):
                 arg = self.settings['char_list'][random.randrange(len(self.settings['char_list']))]
@@ -157,7 +157,7 @@ class GeneticAlgorithm(object):
     
     def __create_populatition_bool(self):
         population = {}
-        while len(population)<self.settings['pop_size']:
+        while len(population)<self.settings['population_size']:
             args = []  
             for arg_index in range(self.args[1]):
                 arg = random.randrange(2)
