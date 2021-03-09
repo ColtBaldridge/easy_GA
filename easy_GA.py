@@ -46,10 +46,10 @@ class GeneticAlgorithm(object):
         self.best_fitness = {} #fitness of the best chromosome in per generation, key = gen - value = fitness score
         self.average_fitness = {} #same but average of each generation
         
-    def __set_params(self, params):
+    def __set_params(self, parameters):
         for key in self.defaults:
-            if key in params:
-                self.settings[key] = params[key]
+            if key in parameters:
+                self.settings[key] = parameters[key]
                 if not type(self.settings[key])==type(self.defaults[key]):
                     if key!='elitism_threshold' and key!='ranked_trigger' and key!='elitism_trigger' and key!='proportional_trigger' and key!='best_member_fitness_stop_condition' and key!='filter_threshold':
                         raise TypeError(f"Parameter {key} must be {type(self.defaults[key])}, not {type(self.settings[key])}!")
