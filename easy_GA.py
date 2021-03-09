@@ -12,8 +12,8 @@ class GeneticAlgorithm(object):
     def __init__(self, parameters, fitness_function, chromosome, args, arg_names = None):
         self.defaults = {
         'population_size' : 15,
-        'relative_tolerance' : 10**-5, #if difference between two gen is smaller than this parameter, the algorithm stops
-        'absolute_tolerance' : False, #if gen fitness score is bigger than this, algorithm stops
+        'relative_tolerance' : 10**-5, #if difference between two generations is smaller than this parameter, the algorithm stops
+        'absolute_tolerance' : False, #if generation fitness score is bigger than this, algorithm stops
         'best_member_fitness_stop_condition':None, #if this is a float, when one of the solutions in the GA surpasses the value, the algorithm terminates
         'selection' : 'no_selection', #best members still get to the next generation, but all are favored instead of just top N determined by elitism
         'elitism_threshold': False, #how many of the best chromosomes get to be kept in the population
@@ -24,18 +24,18 @@ class GeneticAlgorithm(object):
         'mutation_rate' : 0.2,
         'mutation_repeats' : 1, #how many mutations per chromosome (same genes may mutate multiple times)
         'mutation_intensity' : 10, #for float/int representation (maximum possible offset when mutating)
-        'max_iter' : 50, #max iterations before algorithm stops
+        'max_iterations' : 50, #max iterations before algorithm stops
         'seed' : False,
         'prop_trig' : False,
         'ranked_trig' : False,
         'char_list' : f' {string.ascii_letters}{string.digits}{string.punctuation}', #char list that limits string representation chromosome states
         'keep_parents_during_crossover' : True, #let parents crossover into next generation
-        'number_of_safe_gens' : 5, #number of gens before stop conditions start to apply
+        'number_of_safe_gens' : 5, #number of generations before stop conditions start to apply
         'filter_return': False, #if this value is true, GA only returns chromosomes >= of 'filter_threshold'
         'filter_threshold': 1.0        
         }
         self.chromosome_repr = args[0]
-        self.population = {} #entire population -> key = gen | value(list) = chromosomes
+        self.population = {} #entire population -> key = generation | value(list) = chromosomes
         self.settings = {}
         self.__set_parameters(parameters)
         self.chromosome = chromosome #reference to Chromosome class
@@ -43,7 +43,7 @@ class GeneticAlgorithm(object):
         self.args = args
         self.arg_names = arg_names
         self.calculated = {}
-        self.best_fitness = {} #fitness of the best chromosome in per generation, key = gen - value = fitness score
+        self.best_fitness = {} #fitness of the best chromosome in per generation, key = generation - value = fitness score
         self.average_fitness = {} #same but average of each generation
         
     def __set_parameters(self, parameters):
@@ -56,10 +56,10 @@ class GeneticAlgorithm(object):
             else:
                 self.settings[key] = self.defaults[key]
     
-    def __get_stats(self, gen):
-        keys = list(self.population[gen].keys())
-        self.best_fitness[gen] = max(self.population[gen].values())
-        self.average_fitness[gen] = self.__get_generation_avg(gen)
+    def __get_stats(self, generation):
+        keys = list(self.population[generation].keys())
+        self.best_fitness[generation] = max(self.population[generation].values())
+        self.average_fitness[generation] = self.__get_generation_avg(generation)
     
     def __create_populatition(self): #initialize population
         self.population = {} #reset in case of a rerun
@@ -108,17 +108,17 @@ class GeneticAlgorithm(object):
                     selected[chromosome] = self.__get_fitness(chromosome)
         return selected
     
-    def __toggle_selection_mode(self, gen): #switch modes based on triggers
+    def __toggle_selection_mode(self, generation): #switch modes based on triggers
         if self.settings['elitism_trigger']:
-            if self.__get_generation_avg(gen)>=self.settings['elitism_trigger']:
+            if self.__get_generation_avg(generation)>=self.settings['elitism_trigger']:
                 self.settings['selection'] = 'elitism'
                 self.settings['elitism_trigger'] = False
         if self.settings['ranked_trigger']:
-            if self.__get_generation_avg(gen)>=self.settings['ranked_trigger']:
+            if self.__get_generation_avg(generation)>=self.settings['ranked_trigger']:
                 self.settings['selection'] = 'ranked'
                 self.settings['ranked_trigger'] = False
         if self.settings['proportional_trigger']:
-            if self.__get_generation_avg(gen)>=self.settings['proportional_trigger']:
+            if self.__get_generation_avg(generation)>=self.settings['proportional_trigger']:
                 self.settings['selection'] = 'proportional'
                 self.settings['proportional_trigger'] = False
     
@@ -174,9 +174,9 @@ class GeneticAlgorithm(object):
             self.calculated[chromosome.get_args()] = fitness_score
         return fitness_score
         
-    def __next_gen(self, gen): #create next generation
+    def __next_gen(self, generation): #create next generation
         new_generation = {}
-        crossover_selected = self.__selection(self.population[gen-1])
+        crossover_selected = self.__selection(self.population[generation-1])
         new_gen_raw = self.__crossover_gen(crossover_selected)
         sorted_gen = sorted(new_gen_raw, key=self.fitness_function)
         sorted_gen.reverse()
@@ -185,10 +185,10 @@ class GeneticAlgorithm(object):
                 new_generation[chromosome] = self.__get_fitness(chromosome)
             else:
                 break
-        self.population[gen] = new_generation
-        self.__get_stats(gen)
-        self.__sort_gen(gen)
-        self.__toggle_selection_mode(gen)
+        self.population[generation] = new_generation
+        self.__get_stats(generation)
+        self.__sort_gen(generation)
+        self.__toggle_selection_mode(generation)
     
     def __mutate(self, chromosome): #mutate a chromosome
         pass
@@ -228,63 +228,63 @@ class GeneticAlgorithm(object):
         child2.mutate(self.settings['mutation_rate'], self.settings['mutation_repeats'], self.settings['mutation_intensity'])
         return [child1,child2]
     
-    def __sort_gen(self, gen):
-        sorted_gen = sorted(self.population[gen], key=self.fitness_function)
+    def __sort_gen(self, generation):
+        sorted_gen = sorted(self.population[generation], key=self.fitness_function)
         sorted_gen.reverse()
         sorted_fitness = []
         for chromosome in sorted_gen:
             sorted_fitness.append(self.__get_fitness(chromosome))
         sorted_gen_dict = dict(zip(sorted_gen,sorted_fitness))
-        self.population[gen] = sorted_gen_dict
+        self.population[generation] = sorted_gen_dict
         
-    def __remove_dupes(self, gen):
+    def __remove_dupes(self, generation):
         pass
     
-    def __stop_conditions(self, gen):
-        if gen>self.settings['number_of_safe_gens']:
-            if abs(self.__get_generation_avg(gen-1)-self.__get_generation_avg(gen))<self.settings['relative_tolerance']: #difference between two gens
+    def __stop_conditions(self, generation):
+        if generation>self.settings['number_of_safe_gens']:
+            if abs(self.__get_generation_avg(generation-1)-self.__get_generation_avg(generation))<self.settings['relative_tolerance']: #difference between two generations
                 return True
             elif self.settings['absolute_tolerance']:
-                if self.__get_generation_avg(gen)>=self.settings['absolute_tolerance']:
+                if self.__get_generation_avg(generation)>=self.settings['absolute_tolerance']:
                     return True
             elif type(self.settings['best_member_fitness_stop_condition'])==float:
-                if self.best_fitness[gen]>=self.settings['best_member_fitness_stop_condition']:
+                if self.best_fitness[generation]>=self.settings['best_member_fitness_stop_condition']:
                     return True
         return False
     
-    def __get_generation_avg(self, gen):
+    def __get_generation_avg(self, generation):
         sum = 0.0
-        for chromosome in self.population[gen]:
+        for chromosome in self.population[generation]:
             sum+=self.__get_fitness(chromosome)
         try:
-            return sum/len(self.population[gen])
+            return sum/len(self.population[generation])
         except ZeroDivisionError:
             return 0
     
-    def __display_gen(self, gen):
-        print(f"Gen {gen}: Average fitness -> {self.__get_generation_avg(gen)}")
-        for chromosome in self.population[gen]:
-            print(f"{chromosome.get_args()} -> {self.population[gen][chromosome]}")
+    def __display_gen(self, generation):
+        print(f"Gen {generation}: Average fitness -> {self.__get_generation_avg(generation)}")
+        for chromosome in self.population[generation]:
+            print(f"{chromosome.get_args()} -> {self.population[generation][chromosome]}")
             
     def start(self, verbose = False):
         self.__create_populatition()
         if verbose:
             print(f"Initialize population! Fitness = {self.__get_generation_avg(0)}")        
-        for gen in range(1, self.settings['max_iter']):
-            self.__next_gen(gen)
+        for generation in range(1, self.settings['max_iterations']):
+            self.__next_gen(generation)
             if verbose:
-                print(f"Generation {gen} -> Fitness = {self.__get_generation_avg(gen)}")
-            if self.__stop_conditions(gen):
+                print(f"Generation {generation} -> Fitness = {self.__get_generation_avg(generation)}")
+            if self.__stop_conditions(generation):
                 if verbose:
                     print(f"End")
                 break
         results = []
-        for chromosome in self.population[gen]:
+        for chromosome in self.population[generation]:
             if self.settings['filter_return']:
                 if self.__get_fitness(chromosome)>=self.settings['filter_threshold']:
-                    results.append((chromosome.get_values(),self.population[gen][chromosome]))
+                    results.append((chromosome.get_values(),self.population[generation][chromosome]))
             else:
-                results.append((chromosome.get_values(),self.population[gen][chromosome]))
+                results.append((chromosome.get_values(),self.population[generation][chromosome]))
         return [results, (self.best_fitness, self.average_fitness)]
 
 """
