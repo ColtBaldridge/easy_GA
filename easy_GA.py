@@ -11,7 +11,7 @@ fitness_function - handle to a fitness function that needs to be a class functio
 class GeneticAlgorithm(object):
     def __init__(self, parameters, fitness_function, chromosome, args, arg_names = None):
         self.defaults = {
-        'pop_size' : 15,
+        'population_size' : 15,
         'relative_tolerance' : 10**-5, #if difference between two gen is smaller than this parameter, the algorithm stops
         'absolute_tolerance' : False, #if gen fitness score is bigger than this, algorithm stops
         'best_member_fitness_stop_condition':None, #if this is a float, when one of the solutions in the GA surpasses the value, the algorithm terminates
@@ -61,16 +61,16 @@ class GeneticAlgorithm(object):
         self.best_fitness[gen] = max(self.population[gen].values())
         self.average_fitness[gen] = self.__get_generation_avg(gen)
     
-    def __create_pop(self): #initialize population
+    def __create_populatition(self): #initialize population
         self.population = {} #reset in case of a rerun
         if self.chromosome_repr == 'int':
-            self.population[0] = self.__create_pop_integer()
+            self.population[0] = self.__create_populatition_integer()
         elif self.chromosome_repr == 'float':
-            self.population[0] = self.__create_pop_float()
+            self.population[0] = self.__create_populatition_float()
         elif self.chromosome_repr == 'string':
-            self.population[0] = self.__create_pop_string()
+            self.population[0] = self.__create_populatition_string()
         elif self.chromosome_repr == 'bool':
-            self.population[0] = self.__create_pop_bool()
+            self.population[0] = self.__create_populatition_bool()
         self.__sort_gen(0)
         self.__get_stats(0)
         
@@ -92,7 +92,7 @@ class GeneticAlgorithm(object):
         elif self.settings['selection']=='ranked':
             nr_of_ranks = len(self.settings['ranked_rank_probability'])
             ranks = dict(zip(self.settings['ranked_rank_probability'], nr_of_ranks*[])) # dict{probability : chromosome list}
-            rank_step = self.__round_up_div(self.settings['pop_size'],nr_of_ranks) #how many chromosomes per rank, it's a bit approximate
+            rank_step = self.__round_up_div(self.settings['populatition_size'],nr_of_ranks) #how many chromosomes per rank, it's a bit approximate
             counter=0 #counter to check when index_counter needs to be bumped
             index_counter = 0 #counter for rank probability list
             for chromosome in raw_population:
@@ -122,9 +122,9 @@ class GeneticAlgorithm(object):
                 self.settings['selection'] = 'proportional'
                 self.settings['proportional_trigger'] = False
     
-    def __create_pop_integer(self):
+    def __create_populatition_integer(self):
         population = {}
-        while len(population)<self.settings['pop_size']:
+        while len(population)<self.settings['populatition_size']:
             args = []  
             for arg_range in self.args[1]:
                 arg = random.randrange(arg_range[0], arg_range[1]+1)
@@ -133,9 +133,9 @@ class GeneticAlgorithm(object):
             population[chromosome] = self.__get_fitness(chromosome)
         return population
     
-    def __create_pop_float(self):
+    def __create_populatition_float(self):
         population = {}
-        while len(population)<self.settings['pop_size']:
+        while len(population)<self.settings['populatition_size']:
             args = []  
             for arg_range in self.args[1]:
                 arg = (arg_range[1]-arg_range[0])*random.random()+arg_range[0]
@@ -144,7 +144,7 @@ class GeneticAlgorithm(object):
             population[chromosome] = self.__get_fitness(chromosome)
         return population
     
-    def __create_pop_string(self):
+    def __create_populatition_string(self):
         population = {}
         while len(population)<self.settings['pop_size']:
             args = []  
@@ -155,7 +155,7 @@ class GeneticAlgorithm(object):
             population[chromosome] = self.__get_fitness(chromosome)
         return population
     
-    def __create_pop_bool(self):
+    def __create_populatition_bool(self):
         population = {}
         while len(population)<self.settings['pop_size']:
             args = []  
@@ -267,7 +267,7 @@ class GeneticAlgorithm(object):
             print(f"{chromosome.get_args()} -> {self.population[gen][chromosome]}")
             
     def start(self, verbose = False):
-        self.__create_pop()
+        self.__create_populatition()
         if verbose:
             print(f"Initialize population! Fitness = {self.__get_generation_avg(0)}")        
         for gen in range(1, self.settings['max_iter']):
