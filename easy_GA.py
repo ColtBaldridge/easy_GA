@@ -3,13 +3,13 @@ import string
 
 """
 chromosome - object of a custom class, the reason for this is so some additional stuff related to fitness function may be designed
-params - a dict containing GA parameters displayed in the 'defaults' variable
+parameters - a dict containing GA parameters displayed in the 'defaults' variable
 args - tuple('int'/'float', list of tuples defining limits for chromosome parameters), tuple('string', number_of_args), tuple('bool', number_of_args)
 fitness_function - handle to a fitness function that needs to be a class function of chromosome object's class
 
 """
 class GeneticAlgorithm(object):
-    def __init__(self, params, fitness_function, chromosome, args, arg_names = None):
+    def __init__(self, parameters, fitness_function, chromosome, args, arg_names = None):
         self.defaults = {
         'pop_size' : 15,
         'relative_tolerance' : 10**-5, #if difference between two gen is smaller than this parameter, the algorithm stops
@@ -37,7 +37,7 @@ class GeneticAlgorithm(object):
         self.chromosome_repr = args[0]
         self.population = {} #entire population -> key = gen | value(list) = chromosomes
         self.settings = {}
-        self.__set_params(params)
+        self.__set_parameters(parameters)
         self.chromosome = chromosome #reference to Chromosome class
         self.fitness_function = fitness_function #reference to fitness function
         self.args = args
@@ -46,7 +46,7 @@ class GeneticAlgorithm(object):
         self.best_fitness = {} #fitness of the best chromosome in per generation, key = gen - value = fitness score
         self.average_fitness = {} #same but average of each generation
         
-    def __set_params(self, parameters):
+    def __set_parameters(self, parameters):
         for key in self.defaults:
             if key in parameters:
                 self.settings[key] = parameters[key]
@@ -295,9 +295,9 @@ representation - string type object defining representation, defined within GA c
 class Chromosome(object):
     def __init__(self, args, argnames, representation, limits = None):
         try:
-            self.params = dict(zip(argnames, args))
+            self.parameters = dict(zip(argnames, args))
         except:
-            self.params = dict(zip(range(len(args)), args))
+            self.parameters = dict(zip(range(len(args)), args))
         self.fitness_score = False
         self.representation = representation
         self.limits = limits
@@ -317,27 +317,27 @@ class Chromosome(object):
     def mutate(self, rate, repeats = 1, intensity=None): #limits: for int and float [minrange, maxrange], string pulls limits out of self.settings['char_list']
         if random.random()<rate:
             for i in range(repeats):
-                key = random.choice(list(self.params.keys()))
+                key = random.choice(list(self.parameters.keys()))
                 if self.representation == 'int': 
-                    key_index = list(self.params).index(key)
-                    self.params[key] = self.__limit(self.params[key] + random.randrange(-intensity,intensity+1), key_index)
+                    key_index = list(self.parameters).index(key)
+                    self.parameters[key] = self.__limit(self.parameters[key] + random.randrange(-intensity,intensity+1), key_index)
                 elif self.representation == 'float':
-                    key_index = list(self.params).index(key)                
-                    self.params[key] = self.__limit(self.params[key] + 2*intensity*random.random()-intensity, key_index)
+                    key_index = list(self.parameters).index(key)                
+                    self.parameters[key] = self.__limit(self.parameters[key] + 2*intensity*random.random()-intensity, key_index)
                 elif self.representation == 'string':
-                    self.params[key] = random.choice(self.limits)
+                    self.parameters[key] = random.choice(self.limits)
                 elif self.representation == 'bool':
-                    self.params[key] = 1- self.params[key]
+                    self.parameters[key] = 1- self.parameters[key]
     
     def set_fitness(self, value):
         self.fitness_score = value
         return self.fitness_score
     
     def get_args(self):
-        return f"{self.params}"
+        return f"{self.parameters}"
     
     def get_values(self):
-        return list(self.params.values())
+        return list(self.parameters.values())
     
     def __str__(self):
-        return str(list(self.params.values()))
+        return str(list(self.parameters.values()))
